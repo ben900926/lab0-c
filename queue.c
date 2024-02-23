@@ -26,10 +26,10 @@ struct list_head *q_new()
 void q_free(struct list_head *l)
 {
     element_t *entry, *safe;
-    list_for_each_entry_safe (entry, safe, l, list)
-        if (entry->value)
-            free(entry->value);
-    free(entry);
+    list_for_each_entry_safe (entry, safe, l, list) {
+        free(entry->value);
+        free(entry);
+    }
 
     free(l);
 }
@@ -37,19 +37,67 @@ void q_free(struct list_head *l)
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+
+    element_t *node_element = malloc(sizeof(element_t));
+    if (!node_element)
+        return false;
+
+    node_element->value = malloc((strlen(s) + 1) * sizeof(char));
+    if (!node_element->value) {
+        free(node_element);
+        return false;
+    }
+
+    // strcpy copies null character too
+    strncpy(node_element->value, s, strlen(s) + 1);
+
+    list_add(&node_element->list, head);
+
     return true;
 }
 
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+
+    element_t *node_element = malloc(sizeof(element_t));
+    if (!node_element)
+        return false;
+
+    node_element->value = malloc((strlen(s) + 1) * sizeof(char));
+    if (!node_element->value) {
+        free(node_element);
+        return false;
+    }
+
+    strncpy(node_element->value, s, strlen(s) + 1);
+
+    list_add_tail(&node_element->list, head);
+
     return true;
 }
 
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    // if queue is NULL or empty
+    if (!head || list_empty(head))
+        return NULL;
+
+    element_t *first_element = list_first_entry(head, element_t, list);
+
+    list_del(head->next);
+
+    if (sp) {
+        strncpy(sp, first_element->value, bufsize - 1);
+        strcat(sp, "\0");
+    }
+
+    return first_element;
 }
 
 /* Remove an element from tail of queue */
