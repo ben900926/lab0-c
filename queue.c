@@ -265,6 +265,8 @@ int q_merge_two(struct list_head *left, struct list_head *right, bool descend)
     LIST_HEAD(head);
     while (!list_empty(left) && !list_empty(right)) {
     }
+
+    return 0;
 }
 
 /* Sort elements of queue in ascending/descending order */
