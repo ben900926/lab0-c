@@ -15,16 +15,18 @@
 struct list_head *q_new()
 {
     struct list_head *head = malloc(sizeof(struct list_head));
-    if (!head)
-        return NULL;
+    if (head)
+        INIT_LIST_HEAD(head);
 
-    INIT_LIST_HEAD(head);
     return head;
 }
 
 /* Free all storage used by queue */
 void q_free(struct list_head *l)
 {
+    if (!l)
+        return;
+
     element_t *entry, *safe;
     list_for_each_entry_safe (entry, safe, l, list) {
         free(entry->value);
@@ -64,21 +66,7 @@ bool q_insert_tail(struct list_head *head, char *s)
     if (!head)
         return false;
 
-    element_t *node_element = malloc(sizeof(element_t));
-    if (!node_element)
-        return false;
-
-    node_element->value = malloc((strlen(s) + 1) * sizeof(char));
-    if (!node_element->value) {
-        free(node_element);
-        return false;
-    }
-
-    strncpy(node_element->value, s, strlen(s) + 1);
-
-    list_add_tail(&node_element->list, head);
-
-    return true;
+    return q_insert_head(head->prev, s);
 }
 
 /* Remove an element from head of queue */
@@ -93,8 +81,8 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
     list_del_init(&head_element->list);
 
     if (sp) {
-        strncpy(sp, head_element->value, bufsize - 1);
-        strcat(sp, "\0");
+        strncpy(sp, head_element->value, bufsize);
+        sp[bufsize - 1] = '\0';
     }
 
     return head_element;
@@ -103,20 +91,12 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    // yanjiew1 edition
     // if queue is NULL or empty
     if (!head || list_empty(head))
         return NULL;
 
-    element_t *tail_element = list_last_entry(head, element_t, list);
-
-    list_del_init(&tail_element->list);
-
-    if (sp) {
-        strncpy(sp, tail_element->value, bufsize - 1);
-        strcat(sp, "\0");
-    }
-
-    return tail_element;
+    return q_remove_head(head->prev->prev, sp, bufsize);
 }
 
 /* Return number of elements in queue */
@@ -252,8 +232,8 @@ bool cmp_func(struct list_head *left, struct list_head *right, bool descend)
     char *left_value = list_first_entry(left, element_t, list)->value;
     char *right_value = list_first_entry(right, element_t, list)->value;
 
-    // XNOR logic
-    return ((strcmp(left_value, right_value) > 0) == descend);
+    // XOR logic
+    return descend ^ (strcmp(left_value, right_value) > 0);
 }
 
 /* Merge two sorted queues into one sorted one (for merge sort) */
@@ -263,10 +243,28 @@ int q_merge_two(struct list_head *left, struct list_head *right, bool descend)
         return 0;
 
     LIST_HEAD(head);
-    while (!list_empty(left) && !list_empty(right)) {
+    int count = 0;
+    for (;;) {
+        if (cmp_func(left, right, descend)) {
+            list_move_tail(right->next, &head);
+            if (list_empty(right)) {
+                count += q_size(left);
+                list_splice(&head, left);
+                break;
+            }
+        } else {
+            list_move_tail(left->next, &head);
+            if (list_empty(left)) {
+                count += q_size(right);
+                list_splice(right, left);
+                list_splice(&head, left);
+                break;
+            }
+        }
+        count++;
     }
 
-    return 0;
+    return count;
 }
 
 /* Sort elements of queue in ascending/descending order */
@@ -298,6 +296,30 @@ void q_sort(struct list_head *head, bool descend)
 int q_ascend(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
+    if (!head || head->next == head->prev)
+        return 0;
+
+    element_t *current = list_last_entry(head, element_t, list);
+    struct list_head *it = head->prev->prev;
+    int count = 1;
+
+    while (current->list.prev != head) {
+        element_t *it_entry = list_entry(it, element_t, list);
+        if (strcmp(current->value, it_entry->value) < 0) {
+            // remove lesser value
+            it = it->prev;
+            list_del(it->next);
+            q_release_element(it_entry);
+        } else {
+            // update current
+            current = it_entry;
+            count++;
+            it = it->prev;
+        }
+    }
+
+    return count;
+
     return 0;
 }
 
@@ -306,6 +328,32 @@ int q_ascend(struct list_head *head)
 int q_descend(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
+    // different aspect: start from tail, remove any lesser value, keep update
+    // larger value
+    if (!head || head->next == head->prev)
+        return 0;
+
+    element_t *current = list_last_entry(head, element_t, list);
+    struct list_head *it = head->prev->prev;
+    int count = 1;
+
+    while (current->list.prev != head) {
+        element_t *it_entry = list_entry(it, element_t, list);
+        if (strcmp(current->value, it_entry->value) > 0) {
+            // remove lesser value
+            it = it->prev;
+            list_del(it->next);
+            q_release_element(it_entry);
+        } else {
+            // update current
+            current = it_entry;
+            count++;
+            it = it->prev;
+        }
+    }
+
+    return count;
+
     return 0;
 }
 
