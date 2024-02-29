@@ -242,26 +242,32 @@ int q_merge_two(struct list_head *left, struct list_head *right, bool descend)
     if (!left || !right)
         return 0;
 
+    if (list_empty(left) || list_empty(right)) {
+        list_splice_init(right, left);
+        return q_size(left);
+    }
+
     LIST_HEAD(head);
     int count = 0;
+
     for (;;) {
+        count++;
         if (cmp_func(left, right, descend)) {
             list_move_tail(right->next, &head);
             if (list_empty(right)) {
                 count += q_size(left);
-                list_splice(&head, left);
+                list_splice_init(&head, left);
                 break;
             }
         } else {
             list_move_tail(left->next, &head);
             if (list_empty(left)) {
                 count += q_size(right);
-                list_splice(right, left);
-                list_splice(&head, left);
+                list_splice_init(right, left);
+                list_splice_init(&head, left);
                 break;
             }
         }
-        count++;
     }
 
     return count;
@@ -319,8 +325,6 @@ int q_ascend(struct list_head *head)
     }
 
     return count;
-
-    return 0;
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
@@ -353,8 +357,6 @@ int q_descend(struct list_head *head)
     }
 
     return count;
-
-    return 0;
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
@@ -362,5 +364,23 @@ int q_descend(struct list_head *head)
 int q_merge(struct list_head *head, bool descend)
 {
     // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+    if (!head || list_empty(head))
+        return 0;
+
+    queue_contex_t *first = list_entry(head->next, queue_contex_t, chain);
+    if (head->next == head->prev)
+        return first->size;
+
+    queue_contex_t *second =
+        list_entry(first->chain.next, queue_contex_t, chain);
+    int size = 0;
+    int n = q_size(head) - 1;
+
+    while (n--) {
+        size = q_merge_two(first->q, second->q, descend);
+        list_move_tail(&second->chain, head);
+        second = list_entry(first->chain.next, queue_contex_t, chain);
+    }
+
+    return size;
 }
