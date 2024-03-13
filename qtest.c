@@ -630,7 +630,7 @@ bool do_sort(int argc, char *argv[])
     return ok && !error_check();
 }
 
-int compare(void *priv, const struct list_head *a, const struct list_head *b)
+int compare(void *priv, struct list_head *a, struct list_head *b)
 {
     if (a == b)
         return 0;
