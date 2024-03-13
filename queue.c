@@ -227,8 +227,13 @@ void q_reverseK(struct list_head *head, int k)
 /* Compare value in list_head entry */
 /* return true (> 0) if left is sorted after right; false (<= 0) if left before
  * right */
-bool cmp_func(struct list_head *left, struct list_head *right, bool descend)
+bool cmp_func(void *priv,
+              struct list_head *left,
+              struct list_head *right,
+              bool descend)
 {
+    (*(int *) priv)++;
+
     char *left_value = list_first_entry(left, element_t, list)->value;
     char *right_value = list_first_entry(right, element_t, list)->value;
 
@@ -249,10 +254,11 @@ int q_merge_two(struct list_head *left, struct list_head *right, bool descend)
 
     LIST_HEAD(head);
     int count = 0;
+    int priv = 0;
 
     for (;;) {
         count++;
-        if (cmp_func(left, right, descend)) {
+        if (cmp_func(&priv, left, right, descend)) {
             list_move_tail(right->next, &head);
             if (list_empty(right)) {
                 count += q_size(left);
