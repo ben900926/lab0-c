@@ -1,5 +1,4 @@
 #include "list_sort.h"
-#include "queue.h"
 
 
 static void merge_final(void *priv,

@@ -37,7 +37,7 @@ $(GIT_HOOKS):
 	@scripts/install-git-hooks
 	@echo
 
-OBJS := qtest.o report.o console.o harness.o queue.o list_sort.o \
+OBJS := qtest.o report.o console.o harness.o queue.o list_sort.o timsort.o \
         random.o dudect/constant.o dudect/fixture.o dudect/ttest.o \
         shannon_entropy.o \
         linenoise.o web.o
@@ -47,6 +47,9 @@ deps := $(OBJS:%.o=.%.o.d)
 qtest: $(OBJS)
 	$(VECHO) "  LD\t$@\n"
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -lm
+
+measure_sort: measure_sort.c timsort.c list_sort.c q_sort.c
+	$(CC) $^ -o $@ $(CFLAGS)
 
 %.o: %.c
 	@mkdir -p .$(DUT_DIR)
@@ -78,6 +81,7 @@ clean:
 	rm -f $(OBJS) $(deps) *~ qtest /tmp/qtest.*
 	rm -rf .$(DUT_DIR)
 	rm -rf *.dSYM
+	rm -f measure_sort
 	(cd traces; rm -f *~)
 
 distclean: clean
