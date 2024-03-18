@@ -33,7 +33,7 @@ void q_shuffle(struct list_head *head)
     if (!head || head->prev == head->next)
         return;
 
-    srand(time(NULL));
+    // srand(time(NULL));
 
     int len = q_size(head);
 
