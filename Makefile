@@ -48,7 +48,7 @@ qtest: $(OBJS)
 	$(VECHO) "  LD\t$@\n"
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -lm
 
-measure_sort: measure_sort.c timsort.c list_sort.c q_sort.c
+measure_sort: miscs/measure_sort.c timsort.c list_sort.c q_sort.c
 	$(CC) $^ -o $@ $(CFLAGS)
 
 %.o: %.c

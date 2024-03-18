@@ -36,7 +36,7 @@ int q_merge_two(void *priv,
     for (;;) {
         count++;
         // please note the difference between cmp and cmp_func in queue.c !!
-        if (cmp(priv, left->next, right->next) > 0) {
+        if (cmp(priv, left->next, right->next) >= 0) {
             list_move_tail(right->next, &head);
             if (list_empty(right)) {
                 count += q_size(left);

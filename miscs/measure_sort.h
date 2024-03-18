@@ -13,7 +13,7 @@
 #include "q_sort.h"
 #include "timsort.h"
 
-#define SAMPLES 1000
+#define SAMPLES 10
 #define CHAR_LEN 10
 
 

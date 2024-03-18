@@ -18,7 +18,6 @@ static void random_string(char *s, size_t charlen)
 {
     for (int i = 0; i < charlen; i++)
         s[i] = charset[rand() % 26];
-    s[charlen] = '\0';
 }
 
 /* Distribution 2, 3: descending/ascending data */
@@ -28,8 +27,56 @@ static void monotonic_string(char *s, size_t charlen, int idx)
         s[charlen - 1 - i] = charset[idx % 26];
         idx /= 26;
     }
-    s[charlen] = '\0';
 }
+
+static void duplicate_string(char *s, size_t charlen, int idx)
+{
+    for (int i = 0; i < charlen; i++)
+        s[i] = charset[idx % 4];
+}
+
+static void equal_string(char *s, size_t charlen)
+{
+    for (int i = 0; i < charlen; i++)
+        s[i] = charset[0];
+}
+
+static void worstcase_string(char *s, size_t charlen, int idx)
+{
+    /* descending for first half part of list */
+    monotonic_string(s, charlen, (idx < charlen / 2) ? charlen - 1 - idx : idx);
+}
+
+static void ascending_plus_string(char *s, size_t charlen, int idx)
+{
+    if (idx < charlen - 10)
+        monotonic_string(s, charlen, idx);
+    else
+        random_string(s, charlen);
+}
+
+static void ascending_three_swap(element_t *space, size_t charlen, int samples)
+{
+    char *tmp = malloc(sizeof(char) * charlen);
+    for (int i = 0; i < 3; i++) {
+        int idx1 = rand() % samples, idx2 = rand() % samples;
+
+        /* swap */
+        strncpy(tmp, (space + idx1)->value, charlen);
+        strncpy((space + idx1)->value, (space + idx2)->value, charlen);
+        strncpy((space + idx2)->value, tmp, charlen);
+    }
+    free(tmp);
+}
+
+// static void ascending_onepercent_string(element_t *space, size_t charlen, int
+// samples)
+// {
+//     for (int i=0; i<samples/100; i++) {
+//         int idx = rand() % samples;
+
+//     }
+// }
 
 static void create_sample(struct list_head *head,
                           element_t *space,
@@ -50,10 +97,37 @@ static void create_sample(struct list_head *head,
         case Descend:
             monotonic_string(elem->value, charlen, samples - 1 - i);
             break;
+        case Equal:
+            equal_string(elem->value, charlen);
+            break;
+        case Duplicate:
+            duplicate_string(elem->value, charlen, i);
+            break;
+        case Worst:
+            worstcase_string(elem->value, charlen, i);
+            break;
+        case AscendPlus:
+            ascending_plus_string(elem->value, charlen, i);
+            break;
+        /* default is ascending data */
         default:
-            printf("Unknown mode");
+            monotonic_string(elem->value, charlen, i);
             break;
         }
+        elem->value[charlen] = '\0';
+    }
+
+    /* if swap is needed */
+    switch (m) {
+    case Ascend3:
+        ascending_three_swap(space, charlen, samples);
+        break;
+    default:
+        break;
+    }
+
+    for (int i = 0; i < samples; i++) {
+        element_t *elem = space + i;
         list_add_tail(&elem->list, head);
     }
 }
@@ -87,6 +161,14 @@ static void copy_list(struct list_head *from,
         list_add_tail(&copy->list, to);
     }
 }
+
+// static void print_list(struct list_head *head)
+// {
+//     element_t *elem = NULL;
+//     list_for_each_entry(elem, head, list)
+//         printf("%d:%s --> ", elem->seq, elem->value);
+//     printf("\n");
+// }
 
 int compare(void *priv, struct list_head *a, struct list_head *b)
 {
@@ -148,8 +230,6 @@ int main(void)
     int count;
     int nums = SAMPLES;
 
-    enum Mode mode = Random;
-
     /* Assume ASLR */
     srand((uintptr_t) &main);
 
@@ -167,7 +247,7 @@ int main(void)
     element_t *warmdata = malloc(sizeof(*warmdata) * SAMPLES);
     element_t *testdata = malloc(sizeof(*testdata) * SAMPLES);
 
-    create_sample(&sample_head, samples, nums, CHAR_LEN, mode);
+    create_sample(&sample_head, samples, nums, CHAR_LEN, Worst);
 
     while (test->impl) {
         printf("==== Testing %s ====\n", test->name);

@@ -107,7 +107,7 @@ void list_sort(void *priv, struct list_head *head, list_cmp_func_t cmp)
         if (bits) {
             /* perform merge */
             struct list_head *a = *tail, *b = a->prev;
-            a = merge(priv, cmp, a, b);
+            a = merge(priv, cmp, b, a);
 
             /* install b's prev link to new merged sublist */
             a->prev = b->prev;
