@@ -1,11 +1,17 @@
 CC = gcc
-CFLAGS = -O1 -g -Wall -Werror -Idudect -I.
+CFLAGS = -O1 -g -Wall -Werror -Idudect -I. 
 
 # Emit a warning should any variable-length array be found within the code.
 CFLAGS += -Wvla
 
+# used by ttt
+LDFLAGS :=
+MCTS_LDFLAGS := $(LDFLAGS) -lm
+MCTS_FLAGS := -D USE_MCTS
+
 GIT_HOOKS := .git/hooks/applied
 DUT_DIR := dudect
+TTT_DIR := ttt
 all: $(GIT_HOOKS) qtest
 
 tid := 0
@@ -39,22 +45,25 @@ $(GIT_HOOKS):
 
 OBJS := qtest.o report.o console.o harness.o queue.o list_sort.o timsort.o shuffle.o \
         random.o dudect/constant.o dudect/fixture.o dudect/ttest.o \
-        shannon_entropy.o \
+		$(TTT_DIR)/do_ttt.o $(TTT_DIR)/agents/mcts.o $(TTT_DIR)/game.o \
+		shannon_entropy.o \
         linenoise.o web.o
 
 deps := $(OBJS:%.o=.%.o.d)
 
 qtest: $(OBJS)
 	$(VECHO) "  LD\t$@\n"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -lm
+	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -lm 
 
 measure_sort: miscs/measure_sort.c timsort.c list_sort.c q_sort.c
 	$(CC) $^ -o $@ $(CFLAGS)
 
 %.o: %.c
 	@mkdir -p .$(DUT_DIR)
+	@mkdir -p .$(TTT_DIR)
+	@mkdir -p .$(TTT_DIR)/agents
 	$(VECHO) "  CC\t$@\n"
-	$(Q)$(CC) -o $@ $(CFLAGS) -c -MMD -MF .$@.d $<
+	$(Q)$(CC) -o $@ $(CFLAGS) -c -MMD -MF .$@.d $< $(MCTS_FLAGS)
 
 check: qtest
 	./$< -v 3 -f traces/trace-eg.cmd
@@ -80,6 +89,7 @@ valgrind: valgrind_existence
 clean:
 	rm -f $(OBJS) $(deps) *~ qtest /tmp/qtest.*
 	rm -rf .$(DUT_DIR)
+	rm -rf .$(TTT_DIR)
 	rm -rf *.dSYM
 	rm -f measure_sort
 	(cd traces; rm -f *~)

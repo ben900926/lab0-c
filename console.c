@@ -392,7 +392,7 @@ static bool do_time(int argc, char *argv[])
 }
 
 static bool use_linenoise = true;
-static int web_fd;
+static int web_fd = -1;
 
 static bool do_web(int argc, char *argv[])
 {
@@ -605,9 +605,11 @@ static int cmd_select(int nfds,
         result--;
 
         set_echo(0);
-        char *cmdline = readline();
-        if (cmdline)
+
+        char *cmdline = readline();  // linenoise(prompt);
+        if (cmdline) {
             interpret_cmd(cmdline);
+        }
     } else if (readfds && FD_ISSET(web_fd, readfds)) {
         FD_CLR(web_fd, readfds);
         result--;

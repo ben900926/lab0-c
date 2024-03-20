@@ -46,6 +46,7 @@ extern int show_entropy;
 #include "queue.h"
 #include "shuffle.h"
 #include "timsort.h"
+#include "ttt/do_ttt.h"
 
 #include "console.h"
 #include "report.h"
@@ -1197,6 +1198,7 @@ static void console_init()
     ADD_COMMAND(reverseK, "Reverse the nodes of the queue 'K' at a time",
                 "[K]");
     ADD_COMMAND(shuffle, "Shuffle the queue using Fisher-Yates Shuffle", "");
+    ADD_COMMAND(ttt, "Play tic-tac-toe", "");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",
