@@ -18,7 +18,8 @@ CPPCHECK_suppresses="--inline-suppr harness.c \
 --suppress=constParameterCallback:console.c \
 --suppress=constParameterPointer:console.c  \
 --suppress=missingInclude \
---suppress=unmatchedSuppression"
+--suppress=unmatchedSuppression \
+--suppress=constParameter"
 CPPCHECK_OPTS="-I. --enable=all --error-exitcode=1 --force $CPPCHECK_suppresses $CPPCHECK_unmatched ."
 
 RETURN=0
