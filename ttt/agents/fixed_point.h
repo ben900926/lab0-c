@@ -21,6 +21,23 @@
 
 typedef long fixed_point_t;
 
+/**
+ * return a * b in fixed-point format
+ */
+fixed_point_t multi_f(fixed_point_t a, fixed_point_t b);
 
+/**
+ * return a / b in fixed-point
+ * take scale factor so fractions of the result can be kept
+ */
+fixed_point_t div_f(fixed_point_t a, fixed_point_t b);
+
+/**
+ * using divison-free approximation of sqrt
+ * ref: https://hackmd.io/@vax-r/linux2024-homework1#Monte-Carlo-Search-Tree
+ */
+fixed_point_t sqrt_f(fixed_point_t num);
+
+fixed_point_t loge_f(fixed_point_t num);
 
 #endif
