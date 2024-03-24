@@ -18,4 +18,4 @@
 #include "agents/negamax.h"
 #endif
 
-bool do_ttt();
+bool ttt(bool ai_vs_ai);

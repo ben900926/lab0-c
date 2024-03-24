@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "game.h"
+#include "../game.h"
+#include "../zobrist.h"
 #include "negamax.h"
 #include "util.h"
-#include "zobrist.h"
 
 #define MAX_SEARCH_DEPTH 6
 

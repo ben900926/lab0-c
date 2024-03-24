@@ -79,6 +79,8 @@ static int string_length = MAXSTRING;
 
 static int descend = 0;
 
+static int ai_vs_ai = 0;
+
 #define MIN_RANDSTR_LEN 5
 #define MAX_RANDSTR_LEN 10
 static const char charset[] = "abcdefghijklmnopqrstuvwxyz";
@@ -801,6 +803,12 @@ static bool do_swap(int argc, char *argv[])
     return !error_check();
 }
 
+static bool do_ttt()
+{
+    ttt(ai_vs_ai);
+    return !error_check();
+}
+
 
 static bool do_ascend(int argc, char *argv[])
 {
@@ -1207,6 +1215,7 @@ static void console_init()
               "Number of times allow queue operations to return false", NULL);
     add_param("descend", &descend,
               "Sort and merge queue in ascending/descending order", NULL);
+    add_param("ai_vs_ai", &ai_vs_ai, "Enable AI VS AI in ttt", NULL);
 }
 
 /* Signal handlers */

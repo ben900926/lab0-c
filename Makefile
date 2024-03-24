@@ -7,7 +7,7 @@ CFLAGS += -Wvla
 # used by ttt
 LDFLAGS :=
 MCTS_LDFLAGS := $(LDFLAGS) -lm
-MCTS_FLAGS := -D USE_MCTS
+# MCTS_FLAGS := -D USE_MCTS
 
 GIT_HOOKS := .git/hooks/applied
 DUT_DIR := dudect
@@ -45,7 +45,7 @@ $(GIT_HOOKS):
 
 OBJS := qtest.o report.o console.o harness.o queue.o list_sort.o timsort.o shuffle.o \
         random.o dudect/constant.o dudect/fixture.o dudect/ttest.o \
-		$(TTT_DIR)/do_ttt.o $(TTT_DIR)/agents/mcts.o $(TTT_DIR)/game.o $(TTT_DIR)/agents/fixed_point.o \
+		$(TTT_DIR)/do_ttt.o $(TTT_DIR)/zobrist.o $(TTT_DIR)/agents/negamax.o $(TTT_DIR)/game.o $(TTT_DIR)/agents/fixed_point.o $(TTT_DIR)/mt19937-64.o  \
 		shannon_entropy.o \
         linenoise.o web.o
 

@@ -21,6 +21,11 @@ static void print_moves()
     printf("\n");
 }
 
+static void clean_moves()
+{
+    move_count = 0;
+}
+
 static int get_input(char player)
 {
     char *line = NULL;
@@ -80,7 +85,7 @@ static int get_input(char player)
     return GET_INDEX(y, x);
 }
 
-bool do_ttt()
+bool ttt(bool ai_vs_ai)
 {
     srand(time(NULL));
     char table[N_GRIDS];
@@ -92,7 +97,7 @@ bool do_ttt()
     rl_agent_t agent;
     unsigned int state_num = 1;
     CALC_STATE_NUM(state_num);
-    init_rl_agent(&agent, state_num, 'O');
+    init_rl_agent(&agent, state_num, ai);
     load_model(&agent, state_num, MODEL_NAME);
 #elif defined(USE_MCTS)
     // A routine for initializing MCTS is not required.
@@ -111,18 +116,19 @@ bool do_ttt()
             break;
         }
 
+        int move;
         if (turn == ai) {
 #ifdef USE_RL
-            int move = play_rl(table, &agent);
+            move = play_rl(table, &agent);
             record_move(move);
 #elif defined(USE_MCTS)
-            int move = mcts(table, ai);
+            move = mcts(table, ai);
             if (move != -1) {
                 table[move] = ai;
                 record_move(move);
             }
 #else
-            int move = negamax_predict(table, ai).move;
+            move = negamax_predict(table, ai).move;
             if (move != -1) {
                 table[move] = ai;
                 record_move(move);
@@ -130,20 +136,41 @@ bool do_ttt()
 #endif
         } else {
             draw_board(table);
-            int move;
-            while (1) {
-                move = get_input(turn);
-                if (table[move] == ' ') {
-                    break;
+            /* AI vs AI */
+            if (ai_vs_ai) {
+#ifdef USE_RL
+                move = play_rl(table, &agent);
+                record_move(move);
+#elif defined(USE_MCTS)
+                move = mcts(table, turn);
+                if (move != -1) {
+                    table[move] = turn;
+                    record_move(move);
                 }
-                printf("Invalid operation: the position has been marked\n");
+#else
+                move = negamax_predict(table, turn).move;
+                if (move != -1) {
+                    table[move] = turn;
+                    record_move(move);
+                }
+#endif
+            } else {
+                /* human part */
+                while (1) {
+                    move = get_input(turn);
+                    if (table[move] == ' ') {
+                        break;
+                    }
+                    printf("Invalid operation: the position has been marked\n");
+                }
+                table[move] = turn;
+                record_move(move);
             }
-            table[move] = turn;
-            record_move(move);
         }
         turn = turn == 'X' ? 'O' : 'X';
     }
     print_moves();
+    clean_moves();
 
     return true;
 }
