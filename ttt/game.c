@@ -94,8 +94,8 @@ void print_time()
 
     info = localtime(&rawtime);
 
-    srtftime(buf, sizeof(buf), "%x - %I:%M%p", info);
-    printf("%s", buf);
+    strftime(buf, sizeof(buf), "%x - %I:%M%p", info);
+    printf("%s\n", buf);
 }
 
 void draw_board(const char *t)
