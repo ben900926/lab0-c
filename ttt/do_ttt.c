@@ -85,12 +85,12 @@ static int get_input(char player)
     return GET_INDEX(y, x);
 }
 
-static LIST_HEAD(tasklist);
-static void (**tasks)(void *); /* array of function pointer */
-static struct arg *args;
-static struct task *curr_task;
-static jmp_buf sched; /* the env variable for schedule function */
-static int ntasks;
+// static LIST_HEAD(tasklist);
+// static void (**tasks)(void *); /* array of function pointer */
+// static struct arg *args;
+// static struct task *curr_task;
+// static jmp_buf sched; /* the env variable for schedule function */
+// static int ntasks;
 
 bool ttt(bool ai_vs_ai)
 {
