@@ -10,12 +10,35 @@
 #include <time.h>
 
 #include "game.h"
-#ifdef USE_RL
-#include "agents/reinforcement_learning.h"
-#elif defined(USE_MCTS)
+
 #include "agents/mcts.h"
-#else
 #include "agents/negamax.h"
-#endif
+#include "agents/reinforcement_learning.h"
+
+#include <setjmp.h>
+#include "../list.h"
 
 bool ttt(bool ai_vs_ai);
+
+/**
+ * Coroutine Settings
+ *
+ * ref: https://github.com/sysprog21/concurrent-programs/blob/master/coro/coro.c
+ * details can check test.c
+ *
+ */
+#define ARR_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+struct task {
+    jmp_buf env;
+    struct list_head list;
+    char *table;
+    char turn;
+    char *task_name;
+};
+
+struct arg {
+    char *table;
+    char turn;
+    char *task_name;
+};

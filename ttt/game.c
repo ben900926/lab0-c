@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "game.h"
 
@@ -83,8 +84,23 @@ int *available_moves(char *table)
     return moves;
 }
 
+void print_time()
+{
+    time_t rawtime;
+    struct tm *info;
+    char buf[80];
+
+    time(&rawtime);
+
+    info = localtime(&rawtime);
+
+    srtftime(buf, sizeof(buf), "%x - %I:%M%p", info);
+    printf("%s", buf);
+}
+
 void draw_board(const char *t)
 {
+    print_time();
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (BOARD_SIZE < 10)
             printf("%2d | ", i + 1);

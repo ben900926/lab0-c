@@ -14,7 +14,7 @@ typedef struct td_agent {
     float *state_value;
 } rl_agent_t;
 
-int table_to_hash(char *table);
+int table_to_hash(const char *table);
 char *hash_to_table(int hash);
 void load_model(rl_agent_t *agent,
                 unsigned int state_num,

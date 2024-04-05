@@ -85,6 +85,13 @@ static int get_input(char player)
     return GET_INDEX(y, x);
 }
 
+static LIST_HEAD(tasklist);
+static void (**tasks)(void *); /* array of function pointer */
+static struct arg *args;
+static struct task *curr_task;
+static jmp_buf sched; /* the env variable for schedule function */
+static int ntasks;
+
 bool ttt(bool ai_vs_ai)
 {
     srand(time(NULL));
@@ -93,17 +100,10 @@ bool ttt(bool ai_vs_ai)
     char turn = 'X';
     char ai = 'O';
 
-#ifdef USE_RL
-    rl_agent_t agent;
-    unsigned int state_num = 1;
-    CALC_STATE_NUM(state_num);
-    init_rl_agent(&agent, state_num, ai);
-    load_model(&agent, state_num, MODEL_NAME);
-#elif defined(USE_MCTS)
-    // A routine for initializing MCTS is not required.
-#else
+    /* AI 1: negamax */
     negamax_init();
-#endif
+    /* AI 2: MCTS */
+
     while (1) {
         char win = check_win(table);
         if (win == 'D') {
@@ -118,42 +118,22 @@ bool ttt(bool ai_vs_ai)
 
         int move;
         if (turn == ai) {
-#ifdef USE_RL
-            move = play_rl(table, &agent);
-            record_move(move);
-#elif defined(USE_MCTS)
-            move = mcts(table, ai);
-            if (move != -1) {
-                table[move] = ai;
-                record_move(move);
-            }
-#else
+            /* AI 1: negamax */
             move = negamax_predict(table, ai).move;
             if (move != -1) {
                 table[move] = ai;
                 record_move(move);
             }
-#endif
         } else {
             draw_board(table);
-            /* AI vs AI */
             if (ai_vs_ai) {
-#ifdef USE_RL
-                move = play_rl(table, &agent);
-                record_move(move);
-#elif defined(USE_MCTS)
+                /* AI 2: MCTS */
                 move = mcts(table, turn);
                 if (move != -1) {
                     table[move] = turn;
                     record_move(move);
                 }
-#else
-                move = negamax_predict(table, turn).move;
-                if (move != -1) {
-                    table[move] = turn;
-                    record_move(move);
-                }
-#endif
+
             } else {
                 /* human part */
                 while (1) {
