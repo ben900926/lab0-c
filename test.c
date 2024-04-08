@@ -58,6 +58,7 @@ void schedule(void)
         printf("Never reached\n");  // ?
     }
 
+    printf("[schedule]: switching\n");
     task_switch();
 }
 
@@ -142,7 +143,7 @@ void task1(void *arg)
     }
 
     printf("%s: complete\n", task->task_name);
-    longjmp(sched, 1);
+    // longjmp(sched, 1);
 }
 
 int main(void)

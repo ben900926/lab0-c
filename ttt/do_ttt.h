@@ -34,7 +34,7 @@ struct task {
     struct list_head list;
     char *table;
     char turn;
-    char *task_name;
+    char task_name[16];
 };
 
 struct arg {

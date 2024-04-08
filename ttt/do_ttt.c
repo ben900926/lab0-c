@@ -85,17 +85,183 @@ static int get_input(char player)
     return GET_INDEX(y, x);
 }
 
-// static LIST_HEAD(tasklist);
-// static void (**tasks)(void *); /* array of function pointer */
-// static struct arg *args;
-// static struct task *curr_task;
-// static jmp_buf sched; /* the env variable for schedule function */
-// static int ntasks;
+/* coroutine */
+static LIST_HEAD(tasklist);
+static void (**tasks)(void *); /* array of function pointer */
+static struct arg *args;
+static struct task *curr_task;
+static jmp_buf sched; /* the env variable for schedule function */
+static int ntasks;
+static char table[N_GRIDS];
 
+/* FIFO order */
+static void task_add(struct task *task)
+{
+    list_add_tail(&task->list, &tasklist);
+}
+
+/* switch to the first task */
+static void task_switch()
+{
+    if (!list_empty(&tasklist)) {
+        // cppcheck-suppress nullPointer
+        struct task *t = list_first_entry(&tasklist, struct task, list);
+        list_del(&t->list);
+        curr_task = t;
+        longjmp(t->env, 1);
+    }
+}
+
+/* main scheduler function */
+void schedule()
+{
+    int i = 0;
+
+    setjmp(sched);
+
+    while (ntasks--) {
+        struct arg arg_i = args[i];
+        tasks[i++](&arg_i);
+        // never reach here
+    }
+
+    task_switch();
+}
+
+void task1(void *arg)
+{
+    /* initialize task with arg */
+    struct task *task = malloc(sizeof(struct task));
+    strncpy(task->task_name, ((struct arg *) arg)->task_name, 16);
+    task->table = ((struct arg *) arg)->table;
+    // strncpy(task->table, ((struct arg*) arg)->table, N_GRIDS);
+    task->turn = ((struct arg *) arg)->turn;
+    INIT_LIST_HEAD(&task->list);
+
+    /* AI 1: negamax */
+    negamax_init();
+
+    printf("%s: %c\n", task->task_name, task->turn);
+
+    if (setjmp(task->env) == 0) {
+        /* add task to tasklist */
+        task_add(task);
+        longjmp(sched, 1);
+    }
+
+    /* now it's curr_task turn to execute */
+    task = curr_task;
+    while (1) {
+        if (setjmp(task->env) == 0) {
+            /* check for win */
+            char win = check_win(task->table);
+            if (win == 'D') {
+                draw_board(task->table);
+                printf("It is a draw!\n");
+                break;
+            } else if (win != ' ') {
+                draw_board(task->table);
+                printf("%c won!\n", win);
+                break;
+            }
+
+            /* make move */
+            int move = negamax_predict(task->table, task->turn).move;
+            if (move != -1) {
+                task->table[move] = task->turn;
+                record_move(move);
+            }
+
+            task_add(task);
+            task_switch();
+        }
+        task = curr_task;
+    }
+
+    free(task);
+}
+
+void task2(void *arg)
+{
+    /* initialize task with arg */
+    struct task *task = malloc(sizeof(struct task));
+    strncpy(task->task_name, ((struct arg *) arg)->task_name, 16);
+    task->table = ((struct arg *) arg)->table;
+    // strncpy(task->table, ((struct arg*) arg)->table, N_GRIDS);
+    task->turn = ((struct arg *) arg)->turn;
+    INIT_LIST_HEAD(&task->list);
+
+    /* AI 2: mcts */
+
+    printf("%s: %c\n", task->task_name, task->turn);
+
+    if (setjmp(task->env) == 0) {
+        /* add task to tasklist */
+        task_add(task);
+        longjmp(sched, 1);
+    }
+
+    /* now it's curr_task turn to execute */
+    task = curr_task;
+    while (1) {
+        if (setjmp(task->env) == 0) {
+            /* check for win */
+            char win = check_win(task->table);
+            if (win == 'D') {
+                draw_board(task->table);
+                printf("It is a draw!\n");
+                break;
+            } else if (win != ' ') {
+                draw_board(task->table);
+                printf("%c won!\n", win);
+                break;
+            }
+
+            /* make move */
+            int move = mcts(task->table, task->turn);
+            if (move != -1) {
+                task->table[move] = task->turn;
+                record_move(move);
+            }
+
+            task_add(task);
+            task_switch();
+        }
+        task = curr_task;
+    }
+    free(task);
+}
+
+/* coroutine implementation */
 bool ttt(bool ai_vs_ai)
 {
     srand(time(NULL));
-    char table[N_GRIDS];
+    memset(table, ' ', N_GRIDS);
+
+    void (*register_task[])(void *) = {task1, task2};
+    tasks = register_task;
+    ntasks = ARR_SIZE(register_task);
+
+    struct arg arg1 = {.table = table, .turn = 'O', .task_name = "negamax"};
+    struct arg arg2 = {.table = table, .turn = 'X', .task_name = "mcts"};
+    struct arg register_args[] = {arg1, arg2};
+    args = register_args;
+
+    INIT_LIST_HEAD(&tasklist);
+
+    schedule();
+
+    print_moves();
+    clean_moves();
+
+    return true;
+}
+
+/* naive version */
+bool ttt2(bool ai_vs_ai)
+{
+    srand((uintptr_t) &ttt);
+    // char table[N_GRIDS];
     memset(table, ' ', N_GRIDS);
     char turn = 'X';
     char ai = 'O';
